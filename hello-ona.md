@@ -15,3 +15,4 @@ library(igraph)
 ```{r}
 print('Hello, network!')
 ```
+[1] Hello, network!
