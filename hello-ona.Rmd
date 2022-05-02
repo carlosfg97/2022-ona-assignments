@@ -1,0 +1,28 @@
+---
+title: "hello-ona"
+author: "Carlos F"
+date: "2/5/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+ 
+
+```{r setup}
+install.packages('igraph')
+
+
+```
+```{r}
+library(tidyverse)
+library(igraph)
+```
+
+
+```{r}
+print('Hello, network!')
+```
