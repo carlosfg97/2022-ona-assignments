@@ -1,6 +1,6 @@
 ---
 title: "Untitled"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -30,11 +30,11 @@ data %>% group_by(Company) %>% count() %>% arrange(desc(n))
 # not being used for now
 
 ```
-```{r}
+```{r results='hide'}
 names(data)
 ```
 
-```{r}
+```{r results='hide'}
 
 data$Last_name_initial = substr(data$Last.Name, 1,1)
 
@@ -63,7 +63,7 @@ edges = edges %>% filter(Var1 != Var2)
 # append to main df1
 df1 <- rbind(df1, edges)
 
-print(dim(df1))
+#print(dim(df1))
   
 }
 
