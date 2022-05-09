@@ -1,0 +1,96 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read the data
+
+
+
+```{r}
+data = read.csv('Connections.csv', encoding = 'UTF-8')
+
+data
+```
+
+```{r}
+library(dplyr)
+
+data %>% group_by(Company) %>% count() %>% arrange(desc(n))
+
+```
+```{r}
+
+#library(tidygraph)
+#library(ggraph)
+
+# not being used for now
+
+```
+```{r}
+names(data)
+```
+
+```{r}
+
+data$Last_name_initial = substr(data$Last.Name, 1,1)
+
+
+data = data %>% mutate(
+  name = paste(First.Name, Last_name_initial, sep = " ")
+)
+
+
+data$index <- 1:nrow(data)
+
+unique(data$Company)
+
+df1 <- data.frame()
+
+# iterate through each company and generate the edges 
+for (company in unique(data$Company) ){
+  
+company_edges = data %>% filter(Company==company) %>% pull(index)
+
+edges = expand.grid(company_edges, company_edges)
+
+# remove the connections with themselves
+edges = edges %>% filter(Var1 != Var2)
+
+# append to main df1
+df1 <- rbind(df1, edges)
+
+print(dim(df1))
+  
+}
+
+# nodes = data$index
+# edges = df1
+
+df1$temp <- apply(df1, 1, function(x) paste(sort(x), collapse=""))
+
+df1 = df1[!duplicated(df1$temp), 1:2] # remove duplicate (each combination appears once)
+
+df1
+```
+
+```{r}
+library(tidygraph)
+#install.packages('network')
+library(network)
+
+
+linkedin_network <- network(df1, attr = data,  matrix.type = "edgelist",directed=FALSE)
+
+linkedin_network
+
+plot(linkedin_network )
+
+#to do: print names of nodes
+```
+  
+
