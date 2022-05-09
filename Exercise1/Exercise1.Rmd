@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 data = read.csv('Connections.csv', encoding = 'UTF-8')
 
-data
 ```
 
 ```{r}
@@ -75,7 +74,7 @@ df1$temp <- apply(df1, 1, function(x) paste(sort(x), collapse=""))
 
 df1 = df1[!duplicated(df1$temp), 1:2] # remove duplicate (each combination appears once)
 
-df1
+
 ```
 
 ```{r}
