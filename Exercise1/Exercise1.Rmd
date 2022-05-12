@@ -1,6 +1,6 @@
 ---
 title: "Exercise 1 Carlos Fabbri"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -67,8 +67,6 @@ ggraph(graph, layout = "graphopt") +
 ## Another method using network library
 
 ```{r results='hide'}
-
-
 
 
 

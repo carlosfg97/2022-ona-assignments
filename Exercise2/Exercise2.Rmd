@@ -1,0 +1,54 @@
+---
+title: "Exercise 2"
+output: pdf_document
+---
+
+```{r}
+library(dplyr)
+library(tidygraph)
+library(tidyverse)
+library(ggraph)
+```
+
+```{r}
+df = read.csv('Fakebook_edges.csv')
+df
+```
+```{r}
+
+graph = as_tbl_graph(df)
+
+#https://www.data-imaginist.com/2017/introducing-tidygraph/
+# printing the network
+ggraph(graph) + 
+  geom_edge_link() + 
+  geom_node_point()+
+  geom_node_text(aes(label = name)) +
+  theme_graph()
+
+```
+```{r}
+
+# centrality degree: counting edges of each note
+graph =graph %>%
+  activate(nodes) %>%
+  mutate(centrality_degree = centrality_degree())
+
+graph
+```
+
+
+```{r}
+# centrality degree: counting edges of each note
+graph = graph %>%
+  activate(nodes) %>%
+  mutate(centrality_betweenness = centrality_betweenness())
+```
+ 
+```{r}
+graph %>% 
+  filter(name %in% c(7,8,9,10))
+```
+Based on the computations of degree and betweenness centralities, we can see that spots B (8) and A (7) are the most appealing to sit in. First, between spots B,C,D, they all share the same centrality degree of 5 (5 edges each), so the thing that sets them apart is the centrality betweenness --how valuable is their position to bring together separate 'cliques' in the network--. From there we can see that B is the preferable spot. Going further, we see that spot A (7) has a notably lower degree centrality, but however outshines the rest in terms of betweenness score. 
+
+Therefore, it will depend more on the intern and his/her intentions or preferences for relationship building to decide which of these 2 to select. In my opinion, considering an internship of 3 months, I think it is better to maximize the amount of trusting relationships built, so I lean towards choosing seat B.
