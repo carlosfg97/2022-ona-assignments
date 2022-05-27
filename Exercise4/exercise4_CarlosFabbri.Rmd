@@ -1,0 +1,125 @@
+---
+title: "Untitled"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(arrow)
+
+load(file='applications.Rda')
+
+load(file='edges')
+
+
+
+names(applications)
+names(edges)
+
+```
+
+To create our list of valid applications, we keep only those that have either an abandont date or an issue date.
+```{r}
+# creating variable for processing time
+
+applications_abandonned = applications[!is.na(applications$abandon_date),]
+
+applications_abandonned = applications_abandonned %>% rename(end_date = abandon_date) %>% select(-c('patent_issue_date'))
+
+applications_issued = applications[!is.na(applications$patent_issue_date),]
+
+applications_issued = applications_issued %>% rename(end_date = patent_issue_date) %>% select(-c('abandon_date'))
+
+applications2 = rbind(applications_abandonned, applications_issued)
+```
+
+
+Now we create the processing time feature by subtracting the filing date to the end date. We make sure to keep rows only where the difference is positive.
+```{r}
+names(applications_abandonned)
+
+proc_t = applications2$end_date - applications2$filing_date
+proc_t = as.numeric(proc_t)
+summary(proc_t)
+
+applications2$app_proc_time = proc_t
+
+applications3 = applications2[applications2$app_proc_time >0 , ]
+
+edges_filt = edges %>% inner_join(applications3[c('application_number')] , by = 'application_number') 
+
+edges_filt
+
+
+```
+
+Now lets create our graph based on these edges.
+
+```{r}
+library(tidygraph)
+library(tidyverse)
+library(ggraph)
+
+edges_filt = edges_filt %>% rename(to = alter_examiner_id ,
+                     from = ego_examiner_id )
+
+graph = as_tbl_graph(x = edges_filt[c('to','from')], directed = TRUE , mode = 'out') #directed from ego examiner to alter examiner iD
+
+
+nodes_df = graph %>%
+  activate(nodes) %>%
+  mutate(centrality_degree = centrality_degree(), 
+         closeness = centrality_closeness(),
+         betweenness = centrality_betweenness(),
+         authority = centrality_authority()) %>% 
+  rename(examiner_id = name) %>%  data.frame()
+
+applications3$examiner_id = as.character(applications3$examiner_id)
+
+
+applications3 = applications3 %>% left_join(nodes_df, by = 'examiner_id')
+```
+
+
+Once we have added the centrality scores to the patent application records, we have a complete dataset to use for regression
+```{r}
+attach(applications3)
+
+
+save(applications3,file="applications3.Rda")
+
+load("applications3.Rda")
+
+
+colSums(is.na(applications3))
+
+
+applications3 = applications3 %>%  drop_na(app_proc_time, centrality_degree,closeness, betweenness,
+authority, gender, race,tenure_days )
+
+attach(applications3)
+
+model1 = lm(app_proc_time ~ centrality_degree + closeness + betweenness +  authority + gender + race + tenure_days + 
+     gender * centrality_degree +
+     gender * betweenness + 
+     gender * closeness + 
+    gender * authority)
+
+#options(scipen=999)
+
+summary(model1)
+
+```
+
+### Interpretations from the model
+
+* From the 4 centrality scores analyzed, degree and betweenness seem to show very small influence in the processing time of an application. On the contrary, closeness and authority scores seem to have strong effect in the duration of an application. On average, the processing time an application is reduced by 1900 days for each additional degree of authority centrality that an examiner has. The effect is of 100 days for the case of the closeness degree.
+
+* On average, applications reviewed by males tend to take 34 more days of processing than the ones handled by females. But, for every extra closeness degree that the male has, he will reduce the processing time in 21 days less than his female counterpart.
+
+* According to the model, white race tends to process applications in 58 days less than the Asian race. However lets remember that this data set has a heavy oversampling of white employees so this result should be taken carefully.
